@@ -1,7 +1,9 @@
 // The C ABI (crates/bentrix-ffi/include/bentrix.h) through Java's Foreign Function & Memory API (final
 // in Java 22): no JNI, no generated glue, no dependency. The library is found on java.library.path
 // (-Djava.library.path=<folder holding libbentrix.so / libbentrix.dll>), or at the file
-// BENTRIX_FFI names; the JVM is run with --enable-native-access=ALL-UNNAMED.
+// BENTRIX_FFI names, or in the folder BENTRIX_FFI_DIR names, or — on Windows — in Bentrix's own folder
+// (%LOCALAPPDATA%\Programs\BENTRIX, where the installer puts it); the JVM is run with
+// --enable-native-access=ALL-UNNAMED.
 package bentrix;
 
 import static java.lang.foreign.ValueLayout.ADDRESS;
@@ -26,6 +28,16 @@ final class Native {
         String file = System.getenv("BENTRIX_FFI");
         if (file != null && !file.isEmpty()) {
             return SymbolLookup.libraryLookup(Path.of(file), Arena.global());
+        }
+        boolean windows = System.getProperty("os.name").startsWith("Windows");
+        String name = windows ? "libbentrix.dll" : System.getProperty("os.name").startsWith("Mac") ? "libbentrix.dylib" : "libbentrix.so";
+        String dir = System.getenv("BENTRIX_FFI_DIR");
+        if (dir != null && !dir.isEmpty() && Path.of(dir, name).toFile().isFile()) {
+            return SymbolLookup.libraryLookup(Path.of(dir, name), Arena.global());
+        }
+        String local = System.getenv("LOCALAPPDATA");
+        if (windows && local != null && !local.isEmpty() && Path.of(local, "Programs", "BENTRIX", name).toFile().isFile()) {
+            return SymbolLookup.libraryLookup(Path.of(local, "Programs", "BENTRIX", name), Arena.global());
         }
         // `libbentrix` on every platform: Java adds `lib` on Linux and macOS and nothing on Windows.
         System.loadLibrary(System.getProperty("os.name").startsWith("Windows") ? "libbentrix" : "bentrix");

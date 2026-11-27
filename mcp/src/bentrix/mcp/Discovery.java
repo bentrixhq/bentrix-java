@@ -11,14 +11,14 @@ import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/** Finding the running application through BENTRIX's agents folder, and pairing with it. */
+/** Finding the running application through Bentrix's agents folder, and pairing with it. */
 public final class Discovery {
     public static final String ENDPOINT_FILE = "endpoint.json";
     public static final String SECRET_FILE = "local.secret";
 
     private Discovery() {}
 
-    /** The folder BENTRIX writes its endpoint and secret into - user_dir(Data, "agents"), as the application has it. */
+    /** The folder Bentrix writes its endpoint and secret into - user_dir(Data, "agents"), as the application has it. */
     public static Path agentsDir() {
         String lad = System.getenv("LOCALAPPDATA");
         if (lad != null && !lad.isEmpty()) {

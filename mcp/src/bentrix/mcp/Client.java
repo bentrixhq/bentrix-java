@@ -1,4 +1,4 @@
-// The hand-written half of BENTRIX's Java MCP client: the connection and everything that does not change
+// The hand-written half of Bentrix's Java MCP client: the connection and everything that does not change
 // when a capability is added (Bentrix.java is the rest, from the catalogue). It speaks MCP revision
 // 2026-07-28 over Streamable HTTP with java.net.http: every request is its own POST carrying the protocol
 // version, the client's identity and its (empty) capabilities in _meta - the same wire as the Python
@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** One BENTRIX endpoint. Extended by the generated Bentrix. */
+/** One Bentrix endpoint. Extended by the generated Bentrix. */
 public class Client implements AutoCloseable {
     public static final String PROTOCOL_VERSION = "2026-07-28";
     public static final String CLIENT_NAME = "bentrix-java-sdk";
@@ -41,7 +41,7 @@ public class Client implements AutoCloseable {
     public static final int BUSY_RETRIES = 10;
     public static final long BUSY_WAIT_MAX_MS = 5000;
 
-    /** A refusal or a failure, in BENTRIX's own words. */
+    /** A refusal or a failure, in Bentrix's own words. */
     public static class McpException extends RuntimeException {
         public McpException(String message) {
             super(message);
@@ -116,6 +116,26 @@ public class Client implements AutoCloseable {
         this.catalogueVersion = catalogueVersion;
     }
 
+    /**
+     * A workbench's address stands for its three parts: {@code bench} given as a
+     * {@code bentrix://<home>/<owner>/bench/<name>} address fills {@code home}, {@code owner} and {@code bench}. Parts
+     * given as before are left as they are.
+     */
+    static Map<String, Object> fromAddress(Map<String, Object> values) {
+        Object v = values.get("bench");
+        if (!(v instanceof String s) || !s.startsWith("bentrix://")) {
+            return values;
+        }
+        String[] parts = s.substring("bentrix://".length()).split("/");
+        if (parts.length < 4 || !parts[2].equals("bench")) {
+            return values;
+        }
+        values.put("home", parts[0]);
+        values.put("owner", parts[1]);
+        values.put("bench", parts[3]);
+        return values;
+    }
+
     /** Leave out what is null, so the server's own default applies. */
     static Map<String, Object> plain(Map<String, ?> args) {
         Map<String, Object> out = new LinkedHashMap<>();
@@ -150,7 +170,7 @@ public class Client implements AutoCloseable {
 
     /** The RFC 6570 subset the catalogue uses: {name} and {?a,b}. A null optional is left out. */
     static String expandTemplate(String template, Map<String, ?> vars) {
-        Map<String, Object> values = plain(vars);
+        Map<String, Object> values = fromAddress(plain(vars));
         Matcher m = TEMPLATE.matcher(template);
         StringBuilder out = new StringBuilder();
         while (m.find()) {

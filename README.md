@@ -12,17 +12,17 @@ A JDK 21 or later (22 or later for the engine below), and Bentrix open on the sa
 
 ## Install
 
-The client is `net.bentrix:bentrix` on Maven Central. With Maven:
+Everything is the one artifact `net.bentrix:bentrix` on Maven Central - the client of a running Bentrix and the engine in your own process. With Maven:
 
 ```xml
 <dependency>
   <groupId>net.bentrix</groupId>
   <artifactId>bentrix</artifactId>
-  <version>0.1.382</version>
+  <version>0.2.383</version>
 </dependency>
 ```
 
-With Gradle: `implementation("net.bentrix:bentrix:0.1.382")`.
+With Gradle: `implementation("net.bentrix:bentrix:0.2.383")`.
 
 Or from a clone of this repository, compiled with your program:
 
@@ -44,9 +44,20 @@ try (Bentrix b = Bentrix.connect("my-agent")) {
 }
 ```
 
+A workbench as one object: its orders, its book, its clock.
+
+```java
+import bentrix.mcp.Bench;
+
+Bench bench = Bench.open(b);
+Bench.Answer answer = bench.buy(0.1, new Bench.BuyOptions().sl(2300.0));
+System.out.println(answer.ok() ? answer.outcome : answer.reason);
+bench.step(new Bench.StepOptions().interval("H1"));
+```
+
 ## The engine in your own process
 
-`net.bentrix:bentrix-engine` — `bentrix.Local` and the Gym's `bentrix.TradingEnv`; from a clone, `src/bentrix/Local.java`, `Native.java` and `TradingEnv.java` — runs Bentrix's engine inside your program, with no window, through Java's Foreign Function and Memory API: Java 22 or later, run with `--enable-native-access=ALL-UNNAMED`. The engine is Bentrix's own library, `libbentrix`, which Bentrix's installer puts in its folder (`%LOCALAPPDATA%\Programs\BENTRIX\libbentrix.dll` on Windows) and the binding finds there; `BENTRIX_FFI` (the file) or `BENTRIX_FFI_DIR` (its folder) names another. It runs for a computer signed in to Bentrix with Plus or Pro; with Free, connect to the running application as above.
+The same artifact's `bentrix.Local` and the Gym's `bentrix.TradingEnv` — from a clone, `src/bentrix/Local.java`, `Native.java` and `TradingEnv.java` — run Bentrix's engine inside your program, with no window, through Java's Foreign Function and Memory API: Java 22 or later, run with `--enable-native-access=ALL-UNNAMED`. The engine is Bentrix's own library, `libbentrix`, which Bentrix's installer puts in its folder (`%LOCALAPPDATA%\Programs\BENTRIX\libbentrix.dll` on Windows) and the binding finds there; `BENTRIX_FFI` (the file) or `BENTRIX_FFI_DIR` (its folder) names another. It runs for a computer signed in to Bentrix with Plus or Pro; with Free, connect to the running application as above.
 
 ## Documentation
 

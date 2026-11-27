@@ -1,4 +1,4 @@
-// **BENTRIX for Java**: the engine in your own process through its C ABI. A Local answers the agents'
+// **Bentrix for Java**: the engine in your own process through its C ABI. A Local answers the agents'
 // tools by name - read, laboratory and paper, never a real account - with every answer JSON as the
 // catalogue describes it (Map, List, Double, String, Boolean).
 package bentrix;
@@ -14,8 +14,9 @@ public final class Local implements AutoCloseable {
     /** Open {@code workspace} (yours when null) and its recordings (yours when null); a window or a
      * --serve already on the workspace refuses it by name. */
     public Local(String workspace, String store) {
+        Native.refuseAnotherInterface();
         try (Arena a = Arena.ofConfined()) {
-            session = (MemorySegment) Native.OPEN.invoke(Native.cstr(a, workspace), Native.cstr(a, store));
+            session = (MemorySegment) Native.OPEN.invoke(Native.cstr(a, workspace), Native.cstr(a, store), Native.cstr(a, "Java"));
         } catch (Throwable t) {
             throw t instanceof BentrixException b ? b : new BentrixException(t.toString());
         }

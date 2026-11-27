@@ -44,15 +44,47 @@ final class Native {
         return SymbolLookup.loaderLookup();
     }
 
+    /** **The engine's interface this package speaks** ({@code bx_abi}): a
+     * library of another one is refused before {@code bx_open}, in a sentence naming both. */
+    static final int ABI = 2;
+
+    /** The interface the library speaks: its {@code bx_abi()}, or 1 for a library from before it (0.1.382). */
+    static int abiOfTheLibrary() {
+        var at = LIB.find("bx_abi");
+        if (at.isEmpty()) {
+            return 1;
+        }
+        try {
+            return (int) LINKER.downcallHandle(at.get(), FunctionDescriptor.of(JAVA_INT)).invoke();
+        } catch (Throwable t) {
+            throw new BentrixException(t.toString());
+        }
+    }
+
+    /** Refused, in words, unless the library speaks {@link #ABI}. */
+    static void refuseAnotherInterface() {
+        int have = abiOfTheLibrary();
+        if (have != ABI) {
+            String built;
+            try {
+                built = string((MemorySegment) VERSION.invoke());
+            } catch (Throwable t) {
+                built = "?";
+            }
+            String update = have < ABI ? "update Bentrix" : "update this package";
+            throw new BentrixException("Bentrix's engine library speaks interface " + have + " (Bentrix " + built + ") and this package speaks " + ABI + ": " + update + ".");
+        }
+    }
+
     private static MethodHandle fn(String name, FunctionDescriptor d) {
         return LINKER.downcallHandle(LIB.find(name).orElseThrow(() -> new BentrixException("the library has no " + name)), d);
     }
 
-    // size_t is 64 bits wide on every platform BENTRIX builds for.
+    // size_t is 64 bits wide on every platform Bentrix builds for.
     static final MethodHandle VERSION = fn("bx_version", FunctionDescriptor.of(ADDRESS));
     static final MethodHandle LAST_ERROR = fn("bx_last_error", FunctionDescriptor.of(ADDRESS));
     static final MethodHandle FREE = fn("bx_free", FunctionDescriptor.ofVoid(ADDRESS));
-    static final MethodHandle OPEN = fn("bx_open", FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS));
+    static final MethodHandle OPEN = fn("bx_open", FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS, ADDRESS));
     static final MethodHandle CLOSE = fn("bx_close", FunctionDescriptor.ofVoid(ADDRESS));
     static final MethodHandle CALL = fn("bx_call", FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS, ADDRESS));
     static final MethodHandle READ = fn("bx_read", FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS, ADDRESS));
